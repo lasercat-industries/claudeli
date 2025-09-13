@@ -1,6 +1,6 @@
 {
   "name": "@lasercat/claudeli",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A TypeScript-native library template with bun",
   "author": "Ryland Goldstein",
   "license": "MIT",

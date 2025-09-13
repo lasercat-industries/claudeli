@@ -8,6 +8,7 @@ import type {
   WebFetchInput,
   WebSearchInput,
 } from '@anthropic-ai/claude-code/sdk-tools';
+import type { PermissionResult, Options } from '@anthropic-ai/claude-code';
 
 export enum ToolType {
   Read = 'Read',
@@ -259,5 +260,26 @@ export interface WebSocketMessage {
   tool?: unknown;
   input?: string; // For cursor-tool-use
 }
+
+export type ClaudeCommandMessage = {
+  type: 'claude-command';
+  command: string;
+  options: Options;
+};
+
+export type ClaudePermissionMessage = {
+  type: 'permissions-response';
+  sessionId: string;
+  requestId: string;
+  result: PermissionResult;
+};
+
+export type AbortSessionMessage = {
+  type: 'abort-session';
+  sessionId: string;
+  provider: string;
+};
+
+export type OutgoingMessage = ClaudeCommandMessage | AbortSessionMessage | ClaudePermissionMessage;
 
 export const claudeChatType = 'claude-chat';
