@@ -20,6 +20,7 @@ bun create github.com/lasercat-industries/library-template my-library
 ```
 
 The interactive setup will:
+
 - Configure your package name as `@lasercat/<your-name>`
 - Set the author field
 - Optionally set up npm publishing
@@ -68,6 +69,7 @@ dist/               # Built output (generated)
 ## GitHub Actions
 
 The template includes a CI workflow that:
+
 - Runs tests, linting, and type checking on every push
 - Publishes to npm when the version changes (if configured)
 
