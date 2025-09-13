@@ -94,6 +94,7 @@ export async function spawnClaude(
     model,
     executable,
     additionalDirectories,
+    pathToClaudeCodeExecutable,
   } = options;
   let capturedSessionId = resume; // Track session ID throughout the process
   let sessionCreatedSent = false; // Track if we've already sent session-created event
@@ -180,6 +181,12 @@ export async function spawnClaude(
     const queryOptions: Options = {
       cwd: workingDir,
       abortController: controller,
+      pathToClaudeCodeExecutable,
+      executable,
+      additionalDirectories,
+      allowedTools,
+      disallowedTools,
+      // images: tempImagePaths, // Currently disabled
       // Debug handler to see tool call format and deny all
       canUseTool: async (
         toolName: string,
