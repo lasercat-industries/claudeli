@@ -7,8 +7,8 @@
  *   tsx spawn-claude-test.ts
  */
 
-import type { WebSocketMessage } from '@lasercat/claudeli';
-import { spawnClaude, createStreamWrapper } from '@lasercat/claudeli';
+import type { WebSocketMessage } from './types';
+import { spawnClaude, createStreamWrapper } from './spawnClaude';
 import { Duplex } from 'stream';
 
 // ANSI color codes for console output
