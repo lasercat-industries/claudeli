@@ -1,0 +1,75 @@
+{
+  "name": "claudeli",
+  "version": "1.0.5",
+  "description": "A TypeScript-native library template with bun",
+  "author": "Ryland Goldstein",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lasercat-industries/library-template.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lasercat-industries/library-template/issues"
+  },
+  "homepage": "https://github.com/lasercat-industries/library-template#readme",
+  "scripts": {
+    "postinstall": "bun run scripts/setup.ts",
+    "prebuild": "bun run clean",
+    "build": "bunx tsc -p tsconfig.build.json && bun run scripts/build.ts",
+    "postbuild": "bun run build:validate",
+    "build:analyze": "bun run build && bunx source-map-explorer dist/*.js",
+    "build:check": "bun run build && bunx publint && bunx attw --pack",
+    "build:size": "bun run build && bunx size-limit",
+    "build:validate": "bun -e 'import(\"./dist/index.js\").then(() => console.log(\"✅ ESM import works\"))'",
+    "clean": "bun run scripts/clean.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path ./node_modules/@lasercat/config/.prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path ./node_modules/@lasercat/config/.prettierignore",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@lasercat/config": "^1.2.3",
+    "@types/bun": "latest",
+    "@types/node": "^24.0.13",
+    "dotenv": "^17.2.0",
+    "eslint": "^9.30.1",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-regexp": "^2.9.0",
+    "eslint-plugin-security": "^3.0.1",
+    "eslint-plugin-unicorn": "^59.0.1",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.36.0"
+  },
+  "prettier": "@lasercat/config/.prettierrc.json",
+  "peerDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

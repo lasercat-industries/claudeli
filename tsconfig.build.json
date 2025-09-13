@@ -1,0 +1,3 @@
+{
+  "extends": "@lasercat/config/tsconfig.build.json"
+}
