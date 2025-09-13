@@ -1,3 +1,2 @@
-export function hello(name: string): string {
-  return `Hello, ${name}!`;
-}
+export * from './spawnClaude';
+export * from './types';

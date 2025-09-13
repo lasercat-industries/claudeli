@@ -1,6 +1,6 @@
 {
-  "name": "claudeli",
-  "version": "1.0.5",
+  "name": "@lasercat/claudeli",
+  "version": "1.0.0",
   "description": "A TypeScript-native library template with bun",
   "author": "Ryland Goldstein",
   "license": "MIT",
@@ -29,14 +29,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/lasercat-industries/library-template.git"
+    "url": "https://github.com/lasercat-industries/claudeli.git"
   },
   "bugs": {
-    "url": "https://github.com/lasercat-industries/library-template/issues"
+    "url": "https://github.com/lasercat-industries/claudeli/issues"
   },
-  "homepage": "https://github.com/lasercat-industries/library-template#readme",
+  "homepage": "https://github.com/lasercat-industries/claudeli#readme",
   "scripts": {
-    "postinstall": "bun run scripts/setup.ts",
     "prebuild": "bun run clean",
     "build": "bunx tsc -p tsconfig.build.json && bun run scripts/build.ts",
     "postbuild": "bun run build:validate",
@@ -71,5 +70,9 @@
   "prettier": "@lasercat/config/.prettierrc.json",
   "peerDependencies": {
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.113",
+    "uuid": "^13.0.0"
   }
 }

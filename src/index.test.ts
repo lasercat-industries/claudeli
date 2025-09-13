@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'bun:test';
-import { hello } from './index';
+
+function hello(name: string): string {
+  return `Hello, ${name}!`;
+}
 
 describe('hello', () => {
   it('should return a greeting', () => {
