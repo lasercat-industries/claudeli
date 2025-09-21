@@ -590,7 +590,6 @@ export async function spawnClaudeHeadless(
   // Override options for headless mode
   const headlessOptions: Options = {
     ...options,
-    resume: undefined, // Never resume, always create new session
     permissionMode: 'bypassPermissions', // Bypass all permission checks
   };
 
