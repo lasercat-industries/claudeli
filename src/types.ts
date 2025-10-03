@@ -1,7 +1,6 @@
 import type {
   BashInput,
   FileEditInput,
-  FileMultiEditInput,
   FileWriteInput,
   GlobInput,
   McpInput,
@@ -50,7 +49,6 @@ export function isApprovableTool(value: string): value is ApprovableTool {
 type ApprovableInputs =
   | BashInput
   | FileEditInput
-  | FileMultiEditInput
   | FileWriteInput
   | GlobInput
   | WebFetchInput
@@ -87,21 +85,6 @@ export interface FileEditOperation {
    * Replace all occurrences of old_string (default false).
    */
   replace_all?: boolean;
-}
-
-// FileMultiEditInput
-export function isFileMultiEditInput(value: unknown): value is FileMultiEditInput {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as FileMultiEditInput).file_path === 'string' &&
-    Array.isArray((value as FileMultiEditInput).edits) &&
-    (value as FileMultiEditInput).edits.length > 0 &&
-    (value as FileMultiEditInput).edits.every(
-      (edit: FileEditOperation) =>
-        typeof edit.old_string === 'string' && typeof edit.new_string === 'string',
-    )
-  );
 }
 
 // FileWriteInput

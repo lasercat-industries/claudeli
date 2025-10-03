@@ -95,6 +95,7 @@ export async function spawnClaude(
     executable,
     additionalDirectories,
     pathToClaudeCodeExecutable,
+    forkSession,
   } = options;
   let capturedSessionId = resume; // Track session ID throughout the process
   let sessionCreatedSent = false; // Track if we've already sent session-created event
@@ -110,6 +111,7 @@ export async function spawnClaude(
     model,
     executable,
     additionalDirectories,
+    forkSession,
   });
 
   try {
@@ -186,6 +188,7 @@ export async function spawnClaude(
       additionalDirectories,
       allowedTools,
       disallowedTools,
+      forkSession,
       // images: tempImagePaths, // Currently disabled
       // Debug handler to see tool call format and deny all
       canUseTool: async (
