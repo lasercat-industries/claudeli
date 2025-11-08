@@ -8,6 +8,7 @@ import type {
   WebSearchInput,
 } from '@anthropic-ai/claude-code/sdk-tools';
 import type { PermissionResult, Options } from '@anthropic-ai/claude-code';
+import type { LoggerConfig } from './logger';
 
 export enum ToolType {
   Read = 'Read',
@@ -266,3 +267,7 @@ export type AbortSessionMessage = {
 export type OutgoingMessage = ClaudeCommandMessage | AbortSessionMessage | ClaudePermissionMessage;
 
 export const claudeChatType = 'claude-chat';
+
+export interface ClaudeliOptions extends Options {
+  logging?: LoggerConfig;
+}

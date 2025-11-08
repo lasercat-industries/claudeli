@@ -5,10 +5,11 @@ import {
   type PermissionUpdate,
   type SDKUserMessage,
 } from '@anthropic-ai/claude-code';
-import type { WebSocket, WebSocketMessage } from './types';
+import type { ClaudeliOptions, WebSocket, WebSocketMessage } from './types';
 import { isApprovableTool, claudeChatType } from './types';
 import { Duplex, Writable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
+import { configureLogger, getLogger } from './logger';
 
 // Type guard to check if output is a WebSocket
 function isWebSocket(output: WebSocket | Writable | Duplex): output is WebSocket {
@@ -54,19 +55,18 @@ export function handlePermissionResponse(
   requestId: string,
   response: PermissionResult,
 ) {
+  const logger = getLogger();
   // Look up by composite key or iterate to find matching session
   for (const [key, pending] of pendingPermissionRequests) {
     if (pending.sessionId === sessionId && pending.requestId === requestId) {
-      console.log('Resolving permission request:', { sessionId, requestId, response });
+      logger.debug('Resolving permission request:', { sessionId, requestId, response });
       clearTimeout(pending.timeout);
       pending.resolve(response);
       pendingPermissionRequests.delete(key);
       return true;
     }
   }
-  console.warn(
-    `No pending permission request found for session ${sessionId}, request ${requestId}`,
-  );
+  logger.warn(`No pending permission request found for session ${sessionId}, request ${requestId}`);
   return false;
 }
 
@@ -82,9 +82,15 @@ const activeClaudeControllers = new Map<string, AbortController>(); // Track act
  */
 export async function spawnClaude(
   command: string,
-  options: Options = {},
+  options: ClaudeliOptions = {},
   output: WebSocket | Writable | Duplex,
 ): Promise<string | undefined> {
+  if (options.logging) {
+    configureLogger(options.logging);
+  }
+
+  const logger = getLogger();
+
   const {
     resume,
     cwd,
@@ -100,9 +106,9 @@ export async function spawnClaude(
   let capturedSessionId = resume; // Track session ID throughout the process
   let sessionCreatedSent = false; // Track if we've already sent session-created event
 
-  console.log('\n========== SPAWN CLAUDE NEW (ANTHROPIC SDK) ==========');
-  console.log('Input Command:', command);
-  console.log('Options:', {
+  logger.debug('\n========== SPAWN CLAUDE NEW (ANTHROPIC SDK) ==========');
+  logger.debug('Input Command:', command);
+  logger.debug('Options:', {
     sessionId: resume,
     cwd,
     permissionMode,
@@ -196,11 +202,11 @@ export async function spawnClaude(
         input: Record<string, unknown>,
         { suggestions }: { signal: AbortSignal; suggestions?: PermissionUpdate[] },
       ): Promise<PermissionResult> => {
-        console.log('\n========== TOOL PERMISSION REQUEST ==========');
-        console.log('Tool Name:', toolName);
-        console.log('Full Input:', JSON.stringify(input, null, 2));
-        console.log('===========================================\n');
-        console.log(JSON.stringify(suggestions, null, 2));
+        logger.verbose('\n========== TOOL PERMISSION REQUEST ==========');
+        logger.verbose('Tool Name:', toolName);
+        logger.verbose('Full Input:', JSON.stringify(input, null, 2));
+        logger.verbose('===========================================\n');
+        logger.verbose(JSON.stringify(suggestions, null, 2));
 
         if (isApprovableTool(toolName)) {
           if (!capturedSessionId) {
@@ -217,7 +223,7 @@ export async function spawnClaude(
             requestId,
           };
 
-          console.log('sending permission request:', { sessionId: resume, requestId });
+          logger.verbose('sending permission request:', { sessionId: resume, requestId });
           sendMessage(output, {
             type: 'permission-request',
             permissionPayload: payload,
@@ -226,7 +232,7 @@ export async function spawnClaude(
 
           return new Promise<PermissionResult>((resolve) => {
             const timeout = setTimeout(() => {
-              console.log('Permission request timed out');
+              logger.verbose('Permission request timed out');
               pendingPermissionRequests.delete(compositeKey);
               resolve({
                 behavior: 'deny',
@@ -247,7 +253,7 @@ export async function spawnClaude(
             behavior: 'allow' as const,
             updatedInput: input,
           };
-          console.log('Returning permission result:', result);
+          logger.verbose('Returning permission result:', result);
           return result;
         }
       },
@@ -257,9 +263,9 @@ export async function spawnClaude(
     queryOptions.model = model || 'claude-opus-4-20250514';
     queryOptions.permissionMode = permissionMode;
 
-    console.log('\n--- QUERY OPTIONS TO ANTHROPIC SDK ---');
-    console.log('Prompt (first 200 chars):', (command || '').substring(0, 200));
-    console.log('Query Options:', JSON.stringify(queryOptions, null, 2));
+    logger.debug('\n--- QUERY OPTIONS TO ANTHROPIC SDK ---');
+    logger.debug('Prompt (first 200 chars):', (command || '').substring(0, 200));
+    logger.debug('Query Options:', JSON.stringify(queryOptions, null, 2));
 
     async function* generateMessages() {
       // Always yield a message when we have content
@@ -286,9 +292,9 @@ export async function spawnClaude(
 
     // Process messages from the async iterator
     for await (const message of stream) {
-      console.log('Message Type:', message.type);
+      logger.verbose('Message Type:', message.type);
       if ('subtype' in message) {
-        console.log('Message Subtype:', message.subtype);
+        logger.verbose('Message Subtype:', message.subtype);
       }
 
       // Convert message format to match old SDK expectations
@@ -301,7 +307,7 @@ export async function spawnClaude(
           content: message.message.content,
           session_id: message.session_id,
         };
-        console.log('Converted Assistant Message:', JSON.stringify(convertedMessage, null, 2));
+        logger.verbose('Converted Assistant Message:', JSON.stringify(convertedMessage, null, 2));
       } else if (message.type === 'user' && message.message) {
         // Convert user messages (tool results) to old format
         const userContent = message.message.content;
@@ -322,7 +328,7 @@ export async function spawnClaude(
             };
           }
         }
-        console.log(
+        logger.verbose(
           'Converted User/Tool Result Message:',
           JSON.stringify(convertedMessage, null, 2),
         );
@@ -333,11 +339,11 @@ export async function spawnClaude(
           done();
         }
 
-        console.log('Result message received - will trigger completion');
+        logger.verbose('Result message received - will trigger completion');
       } else if (message.type === 'system') {
         // System messages can pass through mostly unchanged but we'll skip sending them for now
         // as the old SDK doesn't seem to send these
-        console.log('Skipping system message for UI compatibility');
+        logger.verbose('Skipping system message for UI compatibility');
       }
 
       // Send the converted message if we have one
@@ -375,7 +381,7 @@ export async function spawnClaude(
           // Send session-created event since we got a different session than requested
           if (!sessionCreatedSent) {
             sessionCreatedSent = true;
-            console.log(`sending session created with id ${capturedSessionId}`);
+            logger.debug(`sending session created with id ${capturedSessionId}`);
             sendMessage(output, {
               type: 'session-created',
               sessionId: capturedSessionId,
@@ -390,16 +396,16 @@ export async function spawnClaude(
       // Handle result messages (completion)
       if (message.type === 'result') {
         if ('usage' in message) {
-          console.log('Usage:', message.usage);
+          logger.verbose('Usage:', message.usage);
         }
 
         if ('permission_denials' in message) {
-          console.log('Permission Denials:', message.permission_denials);
+          logger.verbose('Permission Denials:', message.permission_denials);
         }
 
         if ('result' in message && message.subtype === 'success') {
           const resultMessage = message as { result?: string };
-          console.log('Result Text (first 200 chars):', resultMessage.result?.substring(0, 200));
+          logger.verbose('Result Text (first 200 chars):', resultMessage.result?.substring(0, 200));
         }
 
         // Clean up controller reference
@@ -419,8 +425,8 @@ export async function spawnClaude(
       }
     }
 
-    console.log('\n--- MESSAGE ITERATION COMPLETE ---');
-    console.log('Final captured session ID:', capturedSessionId);
+    logger.debug('\n--- MESSAGE ITERATION COMPLETE ---');
+    logger.debug('Final captured session ID:', capturedSessionId);
 
     // Clean up temporary image files if any
     // if (tempImagePaths.length > 0) {
@@ -436,16 +442,16 @@ export async function spawnClaude(
     //   }
     // }
 
-    console.log('========== SPAWN CLAUDE NEW COMPLETE ==========\n');
+    logger.debug('========== SPAWN CLAUDE NEW COMPLETE ==========\n');
 
     // Return the final session ID
     return capturedSessionId;
   } catch (error) {
-    console.log('\n!!! ERROR IN SPAWN CLAUDE NEW !!!');
-    console.log('Error Type:', error?.constructor?.name);
-    console.log('Error Message:', (error as Error).message);
-    console.log('Error Stack:', (error as Error).stack);
-    console.log('Full Error Object:', error);
+    logger.error('\n!!! ERROR IN SPAWN CLAUDE NEW !!!');
+    logger.error('Error Type:', error?.constructor?.name);
+    logger.error('Error Message:', (error as Error).message);
+    logger.error('Error Stack:', (error as Error).stack);
+    logger.error('Full Error Object:', error);
     // Clean up controller reference on error
     const finalSessionId = capturedSessionId || Date.now().toString();
     activeClaudeControllers.delete(finalSessionId);
@@ -541,7 +547,7 @@ export interface HeadlessResult {
  */
 export async function spawnClaudeHeadless(
   command: string,
-  options: Partial<Options> = {},
+  options: Partial<ClaudeliOptions> = {},
 ): Promise<HeadlessResult> {
   const messages: Array<{ type: string; content: unknown }> = [];
   let finalSessionId: string | undefined;
