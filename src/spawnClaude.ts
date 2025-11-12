@@ -4,7 +4,7 @@ import {
   type PermissionResult,
   type PermissionUpdate,
   type SDKUserMessage,
-} from '@anthropic-ai/claude-code';
+} from '@anthropic-ai/claude-agent-sdk';
 import type { ClaudeliOptions, WebSocket, WebSocketMessage } from './types';
 import { isApprovableTool, claudeChatType } from './types';
 import { Duplex, Writable } from 'stream';

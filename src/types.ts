@@ -6,8 +6,8 @@ import type {
   McpInput,
   WebFetchInput,
   WebSearchInput,
-} from '@anthropic-ai/claude-code/sdk-tools';
-import type { PermissionResult, Options } from '@anthropic-ai/claude-code';
+} from '@anthropic-ai/claude-agent-sdk/sdk-tools';
+import type { PermissionResult, Options } from '@anthropic-ai/claude-agent-sdk';
 import type { LoggerConfig } from './logger';
 
 export enum ToolType {
