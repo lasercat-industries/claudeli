@@ -175,10 +175,18 @@ export async function spawnClaude(
     //   }
     // }
 
-    // Create abort controller for cancellation
-    const controller = new AbortController();
+    // Create internal abort controller for cancellation
+    const internalController = new AbortController();
     const processKey = capturedSessionId || Date.now().toString();
-    activeClaudeControllers.set(processKey, controller);
+    activeClaudeControllers.set(processKey, internalController);
+
+    // If user provided an abort controller, link it to our internal one
+    // so either one can abort the session
+    if (options.abortController) {
+      options.abortController.signal.addEventListener('abort', () => {
+        internalController.abort();
+      });
+    }
 
     let done: (() => void) | undefined;
     let receivedResult = new Promise<void>((resolve) => {
@@ -188,7 +196,7 @@ export async function spawnClaude(
     // Build options for the Anthropic SDK
     const queryOptions: Options = {
       cwd: workingDir,
-      abortController: controller,
+      abortController: internalController,
       pathToClaudeCodeExecutable,
       executable,
       additionalDirectories,
@@ -375,7 +383,7 @@ export async function spawnClaude(
           // Update controller key with new session ID
           if (processKey !== capturedSessionId && capturedSessionId) {
             activeClaudeControllers.delete(processKey);
-            activeClaudeControllers.set(capturedSessionId, controller);
+            activeClaudeControllers.set(capturedSessionId, internalController);
           }
 
           // Send session-created event since we got a different session than requested
